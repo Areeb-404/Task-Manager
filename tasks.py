@@ -46,13 +46,39 @@ tasks = [
 ]
 
 def main():
-    print("------Task Manager------")
-    print(f"Loaded {len(tasks)} tasks into memory.\n")
-    add_tasks("Finish Mass Effect 3")
-    toggle_task(3)
-    get_tasks()
-    delete_task(5)
-    get_tasks()
+    while True:
+        print("\n-----------Task Manager Menu-----------")
+        print("1. View Tasks")
+        print("2. Add Task")
+        print("3. Toggle Task Status")
+        print("4. Delete Task")
+        print("5. Exit")
+        
+        choice = int(input("\nEnter Your Choice(1-5): "))
+        
+        if choice==1:
+            get_tasks()
+        elif choice==2:
+            title = input("Enter the title of the new task: ")
+            add_tasks(title)
+        elif choice==3:
+            try:
+                task_id = int(input("Enter the task ID: "))
+                toggle_task(task_id)
+            except ValueError:
+                print("Error: Please enter a valid number as ID")
+        elif choice==4:
+            try:
+                task_id = int(input("Enter the task ID: "))
+                delete_task(task_id)
+            except ValueError:
+                print("Error: Please enter a valid number as ID")
+        elif choice==5:
+            print("\nGoodbye! Thanks for using task manager")
+            break
+        else:
+            print("Invalid Choice, Please select a number from 1 to 5.")
+
 
 if __name__ == "__main__":
     main()
