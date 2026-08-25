@@ -14,6 +14,18 @@ def add_tasks(title):
     tasks.append(new_task)
     print(f"Added task: '{title}' with id {new_id}")
 
+def load_tasks():
+    global tasks  # tells python to operate on the global tasks list instead of creating a local variable named tasks
+    try:
+        with open("tasks.json","r") as f:
+            tasks = json.load(f)
+            print("[System] Tasks loaded Successfully")
+    except FileNotFoundError:
+        # if the file does not exist
+        print("[System] No save file found. Starting with default tasks.json")
+    except json.JSONDecodeError:
+        # if the file is not json compliant, i.e. it contains typos or hidden whitespaces
+        print("[System] Warning! Save file is corrupted. Starting Empty")
 
 def get_tasks():
     if not tasks:
@@ -40,12 +52,19 @@ def delete_task(task_id):
             return
     print(f"Error! task with ID {task_id} was not found")
 
+def save_tasks():
+    with open("tasks.json","w",encoding="utf-8") as f:
+        json.dump(tasks,f,indent=4)
+        print("\n [System] Tasks Successfully saved to tasks.json!")
+
+ 
 tasks = [
     {"id" : 1, "Title" : "Buy Groceries", "completed" : True},
     {"id" : 2, "Title" : "Study Python Basics", "completed" : False}
 ]
 
 def main():
+    load_tasks() # loading the task.json into memory if exists
     while True:
         print("\n-----------Task Manager Menu-----------")
         print("1. View Tasks")
@@ -66,14 +85,17 @@ def main():
                 task_id = int(input("Enter the task ID: "))
                 toggle_task(task_id)
             except ValueError:
+                # if input is not a number
                 print("Error: Please enter a valid number as ID")
         elif choice==4:
             try:
                 task_id = int(input("Enter the task ID: "))
                 delete_task(task_id)
             except ValueError:
+                # if input is not a number
                 print("Error: Please enter a valid number as ID")
         elif choice==5:
+            save_tasks()
             print("\nGoodbye! Thanks for using task manager")
             break
         else:
