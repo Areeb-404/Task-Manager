@@ -1,4 +1,23 @@
 import json
+import os
+import sqlite3
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR,"tasks.db")
+
+def init_db():
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS tasks(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            completed INTEGER DEFAULT 0
+        );
+                       """)
+        conn.commit()
+        print("[System] Database initalized Successfully!")
 
 def add_tasks(title):
     if tasks:
@@ -64,7 +83,8 @@ tasks = [
 ]
 
 def main():
-    load_tasks() # loading the task.json into memory if exists
+    #set up our relational database at startup.
+    init_db()
     while True:
         print("\n-----------Task Manager Menu-----------")
         print("1. View Tasks")
