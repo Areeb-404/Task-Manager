@@ -20,18 +20,14 @@ def init_db():
         print("[System] Database initalized Successfully!")
 
 def add_tasks(title):
-    if tasks:
-        new_id = tasks[-1]['id']+1
-    else:
-        new_id = 1
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+    # NOTE :The data parameter MUST be a tuple. (title,) is single element tuple the comma is necessary to define as a tuple
+    cursor.execute("INSERT INTO tasks (title) VALUES (?);",(title,))
+    # commit the changes permanently into the disk
+    conn.commit()
+    print(f"\n[System] Task '{title}' added to the database Successfully")
 
-    new_task = {
-        "id":new_id,
-        "Title" : title,
-        "completed": False
-    }
-    tasks.append(new_task)
-    print(f"Added task: '{title}' with id {new_id}")
 
 def load_tasks():
     global tasks  # tells python to operate on the global tasks list instead of creating a local variable named tasks
@@ -47,11 +43,26 @@ def load_tasks():
         print("[System] Warning! Save file is corrupted. Starting Empty")
 
 def get_tasks():
-    if not tasks:
-        print("\nyour task list is empty!")
-    for task in tasks:
-        status = "[x] " if task["completed"] else "[ ] "
-        print(f"{status}{task['id']}: {task['Title']}")
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id,title,completed FROM tasks")
+        rows = cursor.fetchall() # returns all the rows of the query as a list of tuples.
+
+    #If the database is empty i.e. no rows are present in the database
+    if not rows:
+        print("\n[System] no tasks found in the database! Go ahead and add something.")
+        return
+
+    # Print the tasks to the terminal
+    print("\n----------Current Tasks------------")
+    for row in rows:
+        # Unpacking the database tuple returned from the fetchall function using sequence Unpacking
+        task_id,title,completed_int = row
+        # convert the sqlite3 0/1 integer into a boolean true false value for python
+        completed = True if completed_int == 1 else False
+        # Display each task with a checkmark accordingly
+        status = "✓" if completed else " "
+        print(f"[{status}] ID {task_id}: {title}")
 
 
 def toggle_task(task_id):
@@ -93,7 +104,10 @@ def main():
         print("4. Delete Task")
         print("5. Exit")
         
-        choice = int(input("\nEnter Your Choice(1-5): "))
+        try:
+            choice = int(input("\nEnter Your Choice(1-5): "))
+        except ValueError:
+            choice = None
         
         if choice==1:
             get_tasks()
