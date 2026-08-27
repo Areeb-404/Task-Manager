@@ -1,4 +1,3 @@
-import json
 import os
 import sqlite3
 
@@ -66,32 +65,25 @@ def get_tasks():
 
 
 def toggle_task(task_id):
-    for task in tasks:
-        if task["id"] == task_id:
-            task["completed"] = not task["completed"]
-            status_text = "completed" if task["completed"] else "pending"
-            print(f"Task {task['Title']} is now marked as {status_text}")
-            return
-    print(f"Error! task with id {task_id} was not found.")
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE tasks SET completed = 1 - completed WHERE id = ?;",(task_id,)) # '?' acts as a placeholder for the input from the python program which will go there
+        # why not use a f string? - the user may input a whole sql command in the id variable which sabotages the program and is also known as an sql injection attack
+        # '1 - completed' is a mathematical trick to invert the 1 to a 0 and a 0 to a 1
+        conn.commit()
 
 def delete_task(task_id):
-    for task in tasks:
-        if task["id"] == task_id:
-            tasks.remove(task)
-            print(f"Successfully removed task '{task['Title']}' (ID: {task_id})")
-            return
-    print(f"Error! task with ID {task_id} was not found")
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM tasks WHERE id=?;",(task_id,))
 
-def save_tasks():
-    with open("tasks.json","w",encoding="utf-8") as f:
-        json.dump(tasks,f,indent=4)
-        print("\n [System] Tasks Successfully saved to tasks.json!")
+        # check if the task_id row actually exists in the database
+        if cursor.rowcount == 0:
+            print(f"[System] Error: Task with ID {task_id} not found in the database")
+        else:
+            conn.commit()
+            print(f"\n[System] Task ID {task_id} was Successfully deleted")
 
- 
-tasks = [
-    {"id" : 1, "Title" : "Buy Groceries", "completed" : True},
-    {"id" : 2, "Title" : "Study Python Basics", "completed" : False}
-]
 
 def main():
     #set up our relational database at startup.
@@ -129,7 +121,6 @@ def main():
                 # if input is not a number
                 print("Error: Please enter a valid number as ID")
         elif choice==5:
-            save_tasks()
             print("\nGoodbye! Thanks for using task manager")
             break
         else:
