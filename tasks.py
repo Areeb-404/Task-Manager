@@ -83,6 +83,7 @@ def toggle_task(task_id):
         # why not use a f string? - the user may input a whole sql command in the id variable which sabotages the program and is also known as an sql injection attack
         # '1 - completed' is a mathematical trick to invert the 1 to a 0 and a 0 to a 1
         conn.commit()
+    return get_task_by_id(task_id)  # show the user the record was changed Successfully
 
 def delete_task(task_id):
     with sqlite3.connect(DB_PATH) as conn:
@@ -92,8 +93,11 @@ def delete_task(task_id):
         # check if the task_id row actually exists in the database
         if cursor.rowcount == 0:
             print(f"[System] Error: Task with ID {task_id} not found in the database")
+            return None
         else:
             conn.commit()
             print(f"\n[System] Task ID {task_id} was Successfully deleted")
+
+    return get_tasks_for_web()
 
 

@@ -31,3 +31,22 @@ def get_task_by_id(task_id : int):
 def create_task(task : TaskCreate):
     new_task = tasks.add_tasks(task.title,task.completed)
     return new_task
+
+@app.patch("/tasks/{task_id}")
+def toggle_task_status(task_id):
+    updated_task = tasks.toggle_task(task_id)
+
+    if updated_task is None:
+        return {"error" : f"task with ID {task_id} does not exist"}
+
+    return updated_task
+
+@app.delete("/tasks/{task_id}")
+def delete_task_req(task_id : int):
+    updated_tasks = tasks.delete_task(task_id)
+    if updated_tasks is None:
+        return {"error" : f"task with ID {task_id} does not exist"}
+
+    return updated_tasks
+
+
