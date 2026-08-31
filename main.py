@@ -1,13 +1,12 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import tasks  #importing the tasks.py file in this file
+import database
 
 class TaskCreate(BaseModel):
     title:str
     completed:bool = False # the default value is false
 
-
-app = FastAPI(title="Task Manager API")
 
 @app.get("/")
 def read_root():
@@ -23,7 +22,7 @@ def get_task_by_id(task_id : int):
     task = tasks.get_task_by_id(task_id)
 
     if task is None:
-        return {"error" : "task with ID {task_id} not found"}
+        return {"error" : f"task with ID {task_id} not found"}
     
     return task
 
@@ -33,7 +32,7 @@ def create_task(task : TaskCreate):
     return new_task
 
 @app.patch("/tasks/{task_id}")
-def toggle_task_status(task_id):
+def toggle_task_status(task_id : int):
     updated_task = tasks.toggle_task(task_id)
 
     if updated_task is None:

@@ -1,6 +1,7 @@
 # My own ignored files
 tasks.json
 tasks.db
+pyrightconfig.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -24,8 +24,8 @@ def add_tasks(title,completed):
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
     # NOTE :The data parameter MUST be a tuple. (title,) is single element tuple the comma is necessary to define as a tuple
-    cursor.execute("INSERT INTO tasks (title,completed) VALUES (?,?);",(title,completed_int))
-    conn.commit()
+        cursor.execute("INSERT INTO tasks (title,completed) VALUES (?,?);",(title,completed_int))
+        conn.commit()
     new_id = cursor.lastrowid
     # commit the changes permanently into the disk
     return get_task_by_id(new_id)
