@@ -31,32 +31,29 @@ def add_tasks(title,completed):
     return get_task_by_id(new_id)
 
 def get_tasks_for_web(conn):
-    with sqlite3.connect(DB_PATH) as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT id,title,completed FROM tasks")
-        rows = cursor.fetchall() # returns all the rows of the query as a list of tuples.
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT id, title, completed FROM tasks")
+            rows = cursor.fetchall()
+    except Exception as e:
+        print(f"Database query failed: {e}")
+        return []
 
-    #If the database is empty i.e. no rows are present in the database
     if not rows:
-        print("\n[System] no tasks found in the database! Go ahead and add something.")
-        return
+        print("[System] no tasks found in the database! Go ahead and add a task.")
+        return []
 
-    # convert the tasks list into a web-friendly dictionary with key labels for fastAPI
     task_list = []
-
-    print("\n----------Current Tasks------------")
+    print("------Current Tasks-------")
     for row in rows:
-        # Unpacking the database tuple returned from the fetchall function using sequence Unpacking
-        task_id,title,completed_int = row
-        # convert the sqlite3 0/1 integer into a boolean true false value for python
-        completed = True if completed_int == 1 else False
-
+        task_id, title, completed = row
         task_list.append({
             "id" : task_id,
-            "title" : title,
-            "completed" : completed
-        })
+            "title": title,
+            "completed": completed}
+        )
     return task_list
+
 
 def get_task_by_id(task_id):
     with sqlite3.connect(DB_PATH) as conn:
