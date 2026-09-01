@@ -1,21 +1,25 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from pydantic import BaseModel
 import tasks  #importing the tasks.py file in this file
-import database
+from database import get_db,create_tables
+
+app = FastAPI(title="Task Manager API")
 
 class TaskCreate(BaseModel):
     title:str
     completed:bool = False # the default value is false
 
-
+@app.on_event("startup")
+def on_startup():
+    create_tables()
 @app.get("/")
 def read_root():
     return {"message" : "Welcome to your task manager API!"}
 
 @app.get("/tasks")
-def get_all_tasks():
+def get_all_tasks(conn=Depends(get_db())):
     # calling the database helper function from tasks.py
-    return tasks.get_tasks_for_web()
+    return tasks.get_tasks_for_web(conn)
 
 @app.get("/tasks/{task_id}")
 def get_task_by_id(task_id : int):

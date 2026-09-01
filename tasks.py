@@ -30,7 +30,7 @@ def add_tasks(title,completed):
     # commit the changes permanently into the disk
     return get_task_by_id(new_id)
 
-def get_tasks_for_web():
+def get_tasks_for_web(conn):
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT id,title,completed FROM tasks")
