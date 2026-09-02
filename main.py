@@ -17,7 +17,7 @@ def read_root():
     return {"message" : "Welcome to your task manager API!"}
 
 @app.get("/tasks")
-def get_all_tasks(conn=Depends(get_db())):
+def get_all_tasks(conn=Depends(get_db)): # depends only needs the function definition, not the function call, depends decides when to call the function by itself.
     # calling the database helper function from tasks.py
     return tasks.get_tasks_for_web(conn)
 
@@ -31,8 +31,8 @@ def get_task_by_id(task_id : int):
     return task
 
 @app.post("/tasks")
-def create_task(task : TaskCreate):
-    new_task = tasks.add_tasks(task.title,task.completed)
+def create_task(task : TaskCreate,conn = Depends(get_db)):
+    new_task = tasks.add_tasks(conn,task.title)
     return new_task
 
 @app.patch("/tasks/{task_id}")

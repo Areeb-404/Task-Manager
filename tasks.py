@@ -19,16 +19,29 @@ def init_db():
         conn.commit()
         print("[System] Database initalized Successfully!")
 
-def add_tasks(title,completed):
-    completed_int = 1 if completed else 0
-    with sqlite3.connect(DB_PATH) as conn:
-        cursor = conn.cursor()
-    # NOTE :The data parameter MUST be a tuple. (title,) is single element tuple the comma is necessary to define as a tuple
-        cursor.execute("INSERT INTO tasks (title,completed) VALUES (?,?);",(title,completed_int))
-        conn.commit()
-    new_id = cursor.lastrowid
-    # commit the changes permanently into the disk
-    return get_task_by_id(new_id)
+def add_tasks(conn, title:str):
+    query = """
+    INSERT INTO tasks (title,completed)
+    VALUES(%s,%s)
+    RETURNING id, title, completed;
+    """
+
+    try:
+        with conn:
+            with conn.cursor() as cursor:
+                cursor.execute(query,(title,False))
+                new_row = cursor.fetchone()
+        if new_row:
+            task_id, title, completed = new_row
+            return{
+                "id" : task_id,
+                "title" : title,
+                "completed" : completed
+            }
+
+    except Exception as e:
+        print(f"Failed to insert task: {e}")
+
 
 def get_tasks_for_web(conn):
     try:
@@ -95,6 +108,6 @@ def delete_task(task_id):
             conn.commit()
             print(f"\n[System] Task ID {task_id} was Successfully deleted")
 
-    return get_tasks_for_web()
+    return get_tasks_for_web(conn)
 
 
