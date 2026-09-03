@@ -1,12 +1,25 @@
+import os
 import psycopg2
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST","127.0.0.1")
+DB_PORT = os.getenv("DB_PORT","5432")
+DB_USER = os.getenv("DB_USER","postgres")
+DB_NAME = os.getenv("DB_NAME","postgres")
+
+if not DB_PASSWORD:
+    raise ValueError("SYSTEM ERROR: 'DB_PASSWORD' IS NOT SET IN YOUR .ENV FILE!")
 
 def get_db():
     connection = psycopg2.connect(
-        host = "127.0.0.1",
-        database = "postgres",
-        user = "postgres",
-        password = "Areeb_2007",
-        port = "5432"
+        host = DB_HOST,
+        database = DB_NAME,
+        user = DB_USER,
+        password = DB_PASSWORD,
+        port = DB_PORT
     )
     try:
         # handing the connection to fastapi route for dependency use
@@ -24,12 +37,12 @@ def create_tables():
         );
     """
     connection = psycopg2.connect(
-        host = "127.0.0.1",
-        database = "postgres",
-        user = "postgres",
-        password = "Areeb_2007",
-        port = "5432")
-
+        host = DB_HOST,
+        database = DB_NAME,
+        user = DB_USER,
+        password = DB_PASSWORD,
+        port = DB_PORT
+    )
     try:
         with connection:
             with connection.cursor() as cursor:

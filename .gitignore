@@ -2,6 +2,7 @@
 tasks.json
 tasks.db
 pyrightconfig.json
+.env
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

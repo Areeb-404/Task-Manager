@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel
 import tasks  #importing the tasks.py file in this file
 from database import get_db,create_tables
@@ -31,17 +31,22 @@ def toggle_task_status(task_id : int,conn = Depends(get_db)):
     updated_task = tasks.toggle_task(conn,task_id)
 
     if updated_task is None:
-        return {"error" : f"task with ID {task_id} does not exist"}
-
+        raise HTTPException(
+            status_code=404,
+            detail=f"Task with ID {task_id} not found"
+        )
     return updated_task
 
 @app.delete("/tasks/{task_id}")
 def delete_task_req(task_id : int,conn=Depends(get_db)):
     success = tasks.delete_task(conn,task_id)
     if not success:
-        print(f"Error: task with ID {task_id} not found")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Task with ID {task_id} not found"
+        )
     return {
-        "message" : f"task with ID {task_id} successfully deleted"
+        "message" : f"Task with ID {task_id} successfully deleted"
     }
 
 
