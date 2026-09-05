@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: local-postgres
+    restart: always
+    environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: ${DB_PASSWORD} # securely reads the password from the .env file
+        POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # for data persistence for the database in case containers are deleted
+
+
+  # Service 2: The fast api web server app container
+
+  web:
+    build: . # '.' means to compile the dockerfile in the current directory
+    container_name: task_manager_web
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=db
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_PORT=5432
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
+
