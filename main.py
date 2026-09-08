@@ -1,9 +1,16 @@
+from os import stat
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel
 import tasks  #importing the tasks.py file in this file
 from database import get_db,create_tables
+import security
+import users
 
 app = FastAPI(title="Task Manager API")
+
+class UserCreate(BaseModel):
+    username:str
+    password:str
 
 class TaskCreate(BaseModel):
     title:str
@@ -49,4 +56,23 @@ def delete_task_req(task_id : int,conn=Depends(get_db)):
         "message" : f"Task with ID {task_id} successfully deleted"
     }
 
+@app.post("/register",status_code=201)
+def register_user(user_data:UserCreate,conn=Depends(get_db)):
+    # api route to register a new user using a username with a hashed password
+    existing_user = users.get_user_by_username(conn,user_data.username)
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Username is already registered."
+        )
+    # Hash the password given by the user
+    hashed_password = security.hash_password(user_data.password)
 
+    # Store the password in the users table
+    new_user = users.create_user(conn,user_data.username,hashed_password)
+    if not new_user:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while creating your account."
+        )
+    return new_user
