@@ -16,6 +16,10 @@ class TaskCreate(BaseModel):
     title:str
     completed:bool = False # the default value is false
 
+class UserLogin(BaseModel):
+    username:str
+    password:str
+
 @app.on_event("startup")
 def on_startup():
     create_tables()
@@ -76,3 +80,28 @@ def register_user(user_data:UserCreate,conn=Depends(get_db)):
             detail="An error occurred while creating your account."
         )
     return new_user
+
+@app.post("/login")
+def login_user(credentials:UserLogin,conn=Depends(get_db)):
+    # authenticate user and return a signed JWT token
+    user_record = users.get_user_by_username(conn,credentials.username)
+    if not user_record:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Username or Password"
+        )
+    # unpacking the tuple recieved from the database
+    db_id,db_username,db_hashed_password = user_record
+    # verifying the user's entered password against the bcrypt hash
+    if not security.verify_password(credentials.password,db_hashed_password):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid username or password"
+        )
+
+    # creating the jwt token for if the user is verified
+    token_data = {"sub":str(db_id),"username":db_username}
+    token = security.create_access_token(token_data)
+
+    # return the token which follows the standard OAuth2 formatting
+    return{"access_token":token,"token_type":"bearer"}
