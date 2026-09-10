@@ -1,5 +1,6 @@
 from os import stat
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 import tasks  #importing the tasks.py file in this file
 from database import get_db,create_tables
@@ -20,6 +21,38 @@ class UserLogin(BaseModel):
     username:str
     password:str
 
+# this below code tells fastapi to read the token from the authorisation header
+# the "tokenurl=login" tells swagger where to send the username/password to recieve a token automatically
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+def get_current_user(token:str = Depends(oauth2_scheme),conn=Depends(get_db)):
+    # fastapi dependency to extract, verify, and authenticate incoming JWT requests
+    # 1. Decoding and verifying the token signature and expiration
+    payload = security.decode_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORISED,
+            detail="could not validate credentials",
+            headers={"WWW_Authenticate" : "Bearer"},
+        )
+    # 2. Extracting the user identity claim from the payload (the 'sub' claim holds user ID)
+    user_id = payload.get("sub")
+    username = payload.get("username")
+    if not user_id or not isinstance(username,str):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORISED,
+            detail="could not validate credentials",
+            headers={"WWW_Authenticate" : "Bearer"},
+        )
+    # 3. Double checking that the user still exists in the database
+    user_record = users.get_user_by_username(conn,username)
+    if not user_record:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORISED,
+            detail="User Not Found",
+            headers={"WWW_Authenticate" : "Bearer"},
+        )
+    # 4. Return the authenticated user information
+    return{"id" : int(user_id), "username" : username}
 @app.on_event("startup")
 def on_startup():
     create_tables()
@@ -82,9 +115,9 @@ def register_user(user_data:UserCreate,conn=Depends(get_db)):
     return new_user
 
 @app.post("/login")
-def login_user(credentials:UserLogin,conn=Depends(get_db)):
+def login_user(form_data : OAuth2PasswordRequestForm = Depends(), conn=Depends(get_db)):
     # authenticate user and return a signed JWT token
-    user_record = users.get_user_by_username(conn,credentials.username)
+    user_record = users.get_user_by_username(conn,form_data.username)
     if not user_record:
         raise HTTPException(
             status_code=401,
@@ -93,7 +126,7 @@ def login_user(credentials:UserLogin,conn=Depends(get_db)):
     # unpacking the tuple recieved from the database
     db_id,db_username,db_hashed_password = user_record
     # verifying the user's entered password against the bcrypt hash
-    if not security.verify_password(credentials.password,db_hashed_password):
+    if not security.verify_password(form_data.password,db_hashed_password):
         raise HTTPException(
             status_code=401,
             detail="Invalid username or password"
@@ -105,3 +138,8 @@ def login_user(credentials:UserLogin,conn=Depends(get_db)):
 
     # return the token which follows the standard OAuth2 formatting
     return{"access_token":token,"token_type":"bearer"}
+
+@app.get("/users/me")
+def read_users_me(current_user = Depends(get_current_user)):
+    # A protected endpoint that only authenticated users can access
+    return current_user
