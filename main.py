@@ -61,18 +61,23 @@ def read_root():
     return {"message" : "Welcome to your task manager API!"}
 
 @app.get("/tasks")
-def get_all_tasks(conn=Depends(get_db)): # depends only needs the function definition, not the function call, depends decides when to call the function by itself.
+def get_all_tasks(conn=Depends(get_db), current_user = Depends(get_current_user)): # depends only needs the function definition, not the function call, depends decides when to call the function by itself.
     # calling the database helper function from tasks.py
-    return tasks.get_tasks_for_web(conn)
+    return tasks.get_tasks_for_web(conn,current_user["id"])
 
 @app.post("/tasks")
-def create_task(task : TaskCreate,conn = Depends(get_db)):
-    new_task = tasks.add_tasks(conn,task.title)
+def create_task(task : TaskCreate,conn = Depends(get_db), current_user = Depends(get_current_user)):
+    new_task = tasks.add_tasks(conn,task.title,current_user["id"])
+    if not new_task:
+        raise HTTPException(
+            status_code=500,
+            detail="Could not create the task."
+        )
     return new_task
 
 @app.patch("/tasks/{task_id}")
-def toggle_task_status(task_id : int,conn = Depends(get_db)):
-    updated_task = tasks.toggle_task(conn,task_id)
+def toggle_task_status(task_id : int,conn = Depends(get_db),current_user = Depends(get_current_user)):
+    updated_task = tasks.toggle_task(conn,task_id,current_user["id"])
 
     if updated_task is None:
         raise HTTPException(
@@ -82,8 +87,8 @@ def toggle_task_status(task_id : int,conn = Depends(get_db)):
     return updated_task
 
 @app.delete("/tasks/{task_id}")
-def delete_task_req(task_id : int,conn=Depends(get_db)):
-    success = tasks.delete_task(conn,task_id)
+def delete_task_req(task_id : int,conn=Depends(get_db),current_user = Depends(get_current_user)):
+    success = tasks.delete_task(conn,task_id,current_user["id"])
     if not success:
         raise HTTPException(
             status_code=404,
